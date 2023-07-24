@@ -1,160 +1,123 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
+import numpy as np
+import matplotlib.pyplot as plt
+import math
 
-# C extensions
-*.so
+# Inputs
+s = 1.1395
+CD0 = 0.0156
+g = 9.80665
+carga = 12.46
+CL_max = 1.9285
+AR = 4
+e = 0.7
+K = 1 / (3.14 * e * AR)
+b = 2.15
+Po = 101.325
+L = 0.0065
+R = 8.31447
+M = 0.0289644
+To = 294.52
 
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
+altura = int(input("Qual a altura de início do Planeio? (Em metros)"))
+h = int(input("Qual a altitude (Em metros)?"))
+passo = float(input("Qual o passo?"))
 
-# PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.manifest
-*.spec
+# Inicialmente definir dados a serem usados na análise
 
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
+# Peso
+W = carga * g
 
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-.pytest_cache/
-cover/
+def Temperatura(h):
+    return (To - (L * h))
 
-# Translations
-*.mo
-*.pot
+def Pressao(h):
+    return (Po * ((1 - ((L * h) / To)) ** ((g * M) / (R * L))))
 
-# Django stuff:
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
+def Densidade(P, T):
+    return (1000 * P * M) / (R * T)
 
-# Flask stuff:
-instance/
-.webassets-cache
+# Cálculo da densidade do ar inicial
+T = Temperatura(h)
+P = Pressao(h)
+ρ = Densidade(P, T)
+ρ0 = Densidade(Po, To)
 
-# Scrapy stuff:
-.scrapy
+# Análise de planeio
 
-# Sphinx documentation
-docs/_build/
+# Em casos extremos:
 
-# PyBuilder
-.pybuilder/
-target/
+# Em máximo alcance
 
-# Jupyter Notebook
-.ipynb_checkpoints
+ClMAL = ((CD0 / K) ** 0.5)
+CdMAL = CD0 + (K * (ClMAL * 2))
+EMAL = ClMAL / CdMAL
+GammaMAL = 1 / EMAL
+VelocidadeMAL = (((2 * W * math.cos(GammaMAL)) / ρ * s * ClMAL) ** 0.5)
+VhMAL = (VelocidadeMAL * math.cos(GammaMAL))
+RDMAL = (VelocidadeMAL * math.sin(GammaMAL))
+GammaMALg = np.degrees(GammaMAL)
+disthMAL = altitude / math.tan(GammaMAL)
 
-# IPython
-profile_default/
-ipython_config.py
+print(f"\n Em máximo alcance:")
+print("Ângulo de Planeio:", GammaMAL)
+print("Ângulo de Planeio (Em graus):", GammaMALg)
+print("Velocidade de Planeio", VelocidadeMAL)
+print("Velocidade horizontal:", VhMAL)
+print("Razão de descida:", RDMAL)
+print("Distância horizontal:", disthMAL)
 
-# pyenv
-#   For a library or package, you might want to ignore these files since the code is
-#   intended to run in multiple environments; otherwise, check them in:
-# .python-version
+# Em máxima autonomia
 
-# pipenv
-#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
-#   However, in case of collaboration, if having platform-specific dependencies or dependencies
-#   having no cross-platform support, pipenv may install dependencies that don't work, or not
-#   install all needed dependencies.
-#Pipfile.lock
+ClMAU = ((3 * CD0 / K) ** 0.5)
+CdMAU = CD0 + (K * (ClMAU * 2))
+EMAU = ClMAU / CdMAU
+GammaMAU = 1 / EMAU
+VelocidadeMAU = (((2 * W * math.cos(GammaMAU)) / ρ * s * ClMAU) ** 0.5)
+VhMAU = (VelocidadeMAU * math.cos(GammaMAU))
+RDMAU = (VelocidadeMAU * math.sin(GammaMAU))
+GammaMAUg = np.degrees(GammaMAU)
+disthMAU = altitude / math.tan(GammaMAU)
 
-# poetry
-#   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
-#   This is especially recommended for binary packages to ensure reproducibility, and is more
-#   commonly ignored for libraries.
-#   https://python-poetry.org/docs/basic-usage/#commit-your-poetrylock-file-to-version-control
-#poetry.lock
+print(f"\n Em máxima autonomia:”)
+print("Ângulo de Planeio:", GammaMAU)
+print("Ângulo de Planeio (Em graus):", GammaMAUg)
+print("Velocidade de Planeio", VelocidadeMAU)
+print("Velocidade horizontal:", VhMAU)
+print("Razão de descida:", RDMAU)
+print("Distância horizontal:", disthMAU)
 
-# pdm
-#   Similar to Pipfile.lock, it is generally recommended to include pdm.lock in version control.
-#pdm.lock
-#   pdm stores project-wide configurations in .pdm.toml, but it is recommended to not include it
-#   in version control.
-#   https://pdm.fming.dev/#use-with-ide
-.pdm.toml
+# Definir um valor inicial e final e dividir em pequenos intervalos de continuidade
 
-# PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
-__pypackages__/
+# Definição dos intervalos de continuidade
+Cl_inicial = 0.1
+Cl_final = 1.5
+passo_Cl = 0.1
 
-# Celery stuff
-celerybeat-schedule
-celerybeat.pid
+# Listas para armazenar os valores
+Cl_list = []
+Velocidade_list = []
 
-# SageMath parsed files
-*.sage.py
+# Cálculo da polar das velocidades de planagem
+Cl = Cl_inicial
+while Cl <= Cl_final:
+    Cd = CD0 + K * (Cl ** 2)
+    E = Cl / Cd
+    Gamma = 1 / E
+    Velocidade = ((2 * W * math.cos(Gamma)) / (ρ * s * Cl)) ** 0.5
+    Cl_list.append(Cl)
+    Velocidade_list.append(Velocidade)
+    
+    Cl += passo_Cl
 
-# Environments
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
+    print("Coeficiente de Sustentação (Cl):", Cl)
+    print("Velocidade de Planeio:", Velocidade)
+    print("---")
 
-# Spyder project settings
-.spyderproject
-.spyproject
-
-# Rope project settings
-.ropeproject
-
-# mkdocs documentation
-/site
-
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# Pyre type checker
-.pyre/
-
-# pytype static type analyzer
-.pytype/
-
-# Cython debug symbols
-cython_debug/
-
-# PyCharm
-#  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
-#  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
-#  and can be added to the global gitignore or merged into this file.  For a more nuclear
-#  option (not recommended) you can uncomment the following to ignore the entire idea folder.
-#.idea/
+# Plotagem da polar das velocidades de planagem
+plt.plot(Cl_list, Velocidade_list)
+plt.xlabel('Coeficiente de Sustentação (Cl)')
+plt.ylabel('Velocidade de Planeio')
+plt.title('Polar das Velocidades de Planagem')
+plt.grid(True)
+plt.show()
+```
